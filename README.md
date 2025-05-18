@@ -46,3 +46,45 @@
 ## Endpoints
 - `POST /liveEvent`: Send a JSON event with `Authorization: secret`
 - `GET /userEvents/:userId`: Get revenue data for user
+
+---
+
+## ⚠️ Troubleshooting
+
+### ❌ `connect ECONNREFUSED 127.0.0.1:8000`
+**Cause:** The server is not running.  
+**Fix:** Start the server before running the client:
+```bash
+node server.js
+```
+
+### ❌ `connect ECONNREFUSED 127.0.0.1:5432`
+**Cause:** PostgreSQL is not running.  
+**Fix:** Start PostgreSQL:
+```bash
+brew services start postgresql@14
+```
+
+### ❌ `role "postgres" does not exist`
+**Cause:** PostgreSQL doesn't have a `postgres` user.  
+**Fix:** Either create the role or change `DB_USER` to your macOS username.
+```sql
+CREATE ROLE postgres WITH LOGIN SUPERUSER;
+```
+
+### ❌ `database "daniellevy" does not exist`
+**Cause:** `.env` is missing, so it defaults to your macOS username as the DB name.  
+**Fix:** Create a `.env` with `DB_NAME=etl_db`, and then:
+```bash
+createdb etl_db
+```
+
+### ❌ `relation "users_revenue" does not exist`
+**Cause:** You didn’t create the required table.  
+**Fix:** Run the schema script:
+```bash
+psql -U <your_user> -d etl_db -f db.sql
+```
+
+Replace `<your_user>` with your local DB user (e.g., `daniellevy`).
+
