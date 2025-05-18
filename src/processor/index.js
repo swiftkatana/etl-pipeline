@@ -1,17 +1,9 @@
 require('dotenv').config();
 const fs = require('fs');
 const readline = require('readline');
-const { Pool } = require('pg');
-
-const EVENTS_FILE = './events.log';
-
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: parseInt(process.env.DB_PORT, 10),
-});
+const pool = require('../config/db');
+const { EVENTS_FILE } = require('../server/services/fileWriter');
+const logger = require('../utils/logger');
 
 (async () => {
   const revenueMap = {};
@@ -40,15 +32,15 @@ const pool = new Pool({
         `, [userId, delta]);
       }
       await client.query('COMMIT');
-      console.log('Data processing complete.');
-    } catch (error) {
+      logger.log('ETL process complete.');
+    } catch (err) {
       await client.query('ROLLBACK');
-      console.error('Transaction failed:', error);
+      logger.error('Transaction error:', err);
     } finally {
       client.release();
     }
-  } catch (error) {
-    console.error('Error processing events:', error);
+  } catch (err) {
+    logger.error('ETL error:', err);
   } finally {
     await pool.end();
   }

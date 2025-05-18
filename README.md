@@ -10,6 +10,32 @@
    npm install
    ```
 
+## Structure
+```
+etl-pipeline/
+├── src/
+│   ├── client/
+│   │   └── index.js
+│   ├── config/
+│   │   └── db.js
+│   ├── processor/
+│   │   └── index.js
+│   ├── server/
+│   │   ├── index.js
+│   │   ├── routes/
+│   │   │   └── events.js
+│   │   └── services/
+│   │       └── fileWriter.js
+│   └── utils/
+│       └── logger.js
+├── db/
+│   └── schema.sql
+├── events.jsonl
+├── .env.example
+├── .gitignore
+└── README.md
+
+
 2. Create a `.env` file in the root with:
    ```env
    PORT=8000
