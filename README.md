@@ -33,7 +33,7 @@
    node server.js
    ```
 
-   **Terminal 2: Send events from client**
+   **Terminal 2: Send events from client (will wait for server and re-send on file change)**
    ```bash
    node client.js
    ```

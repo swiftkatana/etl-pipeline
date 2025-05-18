@@ -1,0 +1,3 @@
+{ "userId": "user1", "name": "add_revenue", "value": 100 }
+{ "userId": "user1", "name": "subtract_revenue", "value": 30 }
+{ "userId": "user2", "name": "add_revenue", "value": 75 }

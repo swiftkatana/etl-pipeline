@@ -1,25 +1,66 @@
-// client.js
 require('dotenv').config();
 const fs = require('fs');
 const readline = require('readline');
 const axios = require('axios');
+const chokidar = require('chokidar');
+const net = require('net');
 
 const FILE_PATH = './events.jsonl';
-const SERVER_URL = `http://localhost:${process.env.PORT || 8000}/liveEvent`;
+const SERVER_PORT = process.env.PORT || 8000;
+const SERVER_URL = `http://localhost:${SERVER_PORT}/liveEvent`;
 
-const rl = readline.createInterface({
-  input: fs.createReadStream(FILE_PATH),
-  crlfDelay: Infinity
-});
+function waitForServerToBeReady(port, retries = 10, delay = 1000) {
+  return new Promise((resolve, reject) => {
+    let attempts = 0;
+    const check = () => {
+      const socket = net.createConnection(port, '127.0.0.1');
+      socket.once('connect', () => {
+        socket.end();
+        resolve();
+      });
+      socket.once('error', () => {
+        attempts++;
+        if (attempts >= retries) return reject(new Error('Server did not respond in time'));
+        setTimeout(check, delay);
+      });
+    };
+    check();
+  });
+}
 
-rl.on('line', async (line) => {
-  try {
-    const event = JSON.parse(line);
-    await axios.post(SERVER_URL, event, {
-      headers: { Authorization: process.env.AUTH_SECRET }
-    });
-    console.log('Event sent:', event);
-  } catch (err) {
-    console.error('Error sending event:', err.message);
+async function sendEventsFromFile() {
+  if (!fs.existsSync(FILE_PATH)) return;
+
+  const rl = readline.createInterface({
+    input: fs.createReadStream(FILE_PATH),
+    crlfDelay: Infinity
+  });
+
+  for await (const line of rl) {
+    try {
+      const event = JSON.parse(line);
+      await axios.post(SERVER_URL, event, {
+        headers: { Authorization: process.env.AUTH_SECRET }
+      });
+      console.log('Event sent:', event);
+    } catch (err) {
+      console.error('Error sending event:', err.message);
+    }
   }
-});
+}
+
+(async () => {
+  try {
+    await waitForServerToBeReady(SERVER_PORT);
+    console.log('Server is ready, sending events from file...');
+    await sendEventsFromFile();
+
+    console.log('Watching for file changes...');
+    chokidar.watch(FILE_PATH).on('change', () => {
+      console.log('File changed, sending new events...');
+      sendEventsFromFile();
+    });
+  } catch (err) {
+    console.error('Failed to connect to server:', err.message);
+  }
+})();
